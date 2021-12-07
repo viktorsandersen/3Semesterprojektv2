@@ -384,12 +384,15 @@ void decoder::decode(std::vector<short> &samples)
             myfile << abs(f[j]) << " ";
             if(largest_element < abs(f[j+1])){
                 largest_element=abs(f[j+1]);
-                index=j+1;
+                index=j+2;
             }
         }
-        double frekvens=index-(43246/2);
 
-        std::cout << frekvens << std::endl;
+        float frekvens=(f.size()/2)-index;
+        //std::cout << "index: " << index << std::endl;
+        //std::cout << "Største: " <<  largest_element << std::endl;
+        //std::cout << "f.size()/2: " <<  (f.size()/2) << std::endl;
+        std::cout << "frekvensen er: " << frekvens << std::endl;
        //for(int i=0; i<f.size();i++)
        //{
        //    fft.push_back(abs(f[i]));
@@ -403,14 +406,12 @@ void decoder::decode(std::vector<short> &samples)
 
         //Index(peak)-Fs/N/2
         //Fs/N=frequency resolution
-        std::cout << "Største: " <<  largest_element << std::endl;
+
         dtmf::toolbox::exportAudio(endelig, "teeeeest.ogg");
-        decoder::end();
-        abort();
+        //decoder::end();
+        //abort();
     }
-
 }
-
 // Decode a chunk of samples from the queue (with threshold breaking)
 void decoder::decode2(std::vector<short> &samples)
 {
