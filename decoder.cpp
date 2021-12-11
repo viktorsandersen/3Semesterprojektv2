@@ -80,7 +80,7 @@ void decoder::run(bool allowPlayback)
     decoder::previousToneId = -1;
     decoder::debounce		= decoder::clock.now();
     decoder::running		= true;
-    decoder::worker			= std::thread(&decoder::threadWindowed);
+    decoder::worker			= std::thread(&decoder::threadInstant);
     //decoder::worker			= std::thread(&decoder::yndlings);
     std::cout << "lavet worker" << std::endl;
 
@@ -366,7 +366,7 @@ void decoder::decode(std::vector<short> &samples)
     //count++;
     std::cout << endelig.size() << std::endl;
 
-    if(endelig.size()>=40600){
+    if(endelig.size()>=43000){
         //dtmf::toolbox::exportAudio(endelig, "teeeeest.ogg");
         //std::ofstream myfile;
         //myfile.open("stream.txt");
@@ -376,40 +376,60 @@ void decoder::decode(std::vector<short> &samples)
         cArray f;
         f=processor::fft(endelig);
         f=f.cshift(f.size()/2);
+        //TODO: Find peak af hele signalet, og lav et nyt array fra peak til slut(eller start) alt efter om peak er over eller under f.size()/2 og bagefter find peak af den nye
         std::ofstream myfile;
         myfile.open("FFTstream.txt");
         float largest_element=abs(f[0]);
-        int index;
+         for(int i=0; i<f.size()/2;i++){
+        f[i]=0;
+         }
+         //Fra peak index minus X (shoulder) skal der laves et nyt index fra
+         //Find peak af det
+         //TODO Fix frekvensfejl (indexering) og find DTMF fejlmargin
+
+        int indexHi;
         for(int j=0; j<f.size();j++){
             myfile << abs(f[j]) << " ";
             if(largest_element < abs(f[j+1])){
                 largest_element=abs(f[j+1]);
-                index=j+2;
+                indexHi=j+2;
             }
         }
-
-        float frekvens=(f.size()/2)-index;
-        //std::cout << "index: " << index << std::endl;
+        float frekvensHi=indexHi-(f.size()/2); //Pga cshift/fftshift
+        for(int i=indexHi-200; i<indexHi+200;i++){
+            f[i]=0;
+        }
+        int indexLo;
+        float largest_elementLo=abs(f[0]);
+        for(int j=0; j<f.size();j++){
+            if(largest_elementLo < abs(f[j+1])){
+                largest_elementLo=abs(f[j+1]);
+                indexLo=j+2;
+            }
+        }
+        float frekvensLo=indexLo-(f.size()/2);
+        //std::cout << "index: " << indexLo << std::endl;
         //std::cout << "Største: " <<  largest_element << std::endl;
         //std::cout << "f.size()/2: " <<  (f.size()/2) << std::endl;
-        std::cout << "frekvensen er: " << frekvens << std::endl;
-       //for(int i=0; i<f.size();i++)
-       //{
-       //    fft.push_back(abs(f[i]));
-       //}
-       // int largest_element;
-       // for(int i=0; i<fft.size();i++){
-       //     if(abs(fft[i])<abs(fft[i+1])){
-       //        largest_element=abs(fft[i+1]);
-       //     }
-       // }
+        std::cout << "High frekvensen er: " << frekvensHi << std::endl;
+        std::cout << "Low frekvensen er: " << frekvensLo << std::endl;
+        //for(int i=0; i<f.size();i++)
+        //{
+        //    fft.push_back(abs(f[i]));
+        //}
+        // int largest_element;
+        // for(int i=0; i<fft.size();i++){
+        //     if(abs(fft[i])<abs(fft[i+1])){
+        //        largest_element=abs(fft[i+1]);
+        //     }
+        // }
 
         //Index(peak)-Fs/N/2
         //Fs/N=frequency resolution
 
         dtmf::toolbox::exportAudio(endelig, "teeeeest.ogg");
-        //decoder::end();
-        //abort();
+        decoder::end();
+        abort();
     }
 }
 // Decode a chunk of samples from the queue (with threshold breaking)

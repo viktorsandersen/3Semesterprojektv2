@@ -119,7 +119,6 @@ void processor::fft(cArray& x)
 // ...
 cArray processor::fft(std::vector<short>& samples)
 {
-    // inspired by
     // https://rosettacode.org/wiki/Fast_Fourier_transform#C.2B.2B
 
     // variables

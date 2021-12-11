@@ -44,7 +44,7 @@ int main() {
 
         decoder::run();
         decoder::threadInstant();
-        decoder::end();
+        //decoder::end();
 
     return 0;
 }
