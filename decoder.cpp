@@ -51,7 +51,7 @@ namespace decoder
     // Private metoder
     void								threadWindowed();
 
-    std::vector<float>					decode(std::vector<short> &samples);
+    void					decode(std::vector<short> &samples);
     void								decode2(std::vector<short> &samples);
 
     void								appendQueue(std::vector<short> samples);
@@ -291,8 +291,70 @@ int decoder::extractToneId(std::array<int, 2> &indexes)
     return (indexLow * 4 + indexHigh);
 }
 
+
+int decoder::extractFrequency(std::vector<int> res) {
+    int hi=-1;
+    int lo=-1;
+    //std::cout << res[0] << std::endl;
+    //std::cout << res[1] << std::endl;
+    for(int i=0; i<3; i++){
+    if(res[1]==freqHi[i]){
+        hi=i;
+    }
+        if(res[0]==freqLo[i]) {
+            lo = i;
+        }
+    }
+    switch(lo){
+        case 0:
+            if(hi==0){
+                std::cout << "1" << std::endl;
+                return 1;
+            }
+            if(hi==1){
+                std::cout << "2" << std::endl;
+                return 2;
+            }
+            if(hi==2){
+                std::cout << "3" << std::endl;
+                return 3;
+            }
+            break;
+        case 1:
+            if(hi==0){
+                std::cout << "4" << std::endl;
+                return 4;
+            }
+            if(hi==1){
+                std::cout << "5" << std::endl;
+                return 5;
+            }
+            if(hi==2){
+                std::cout << "6" << std::endl;
+                return 6;
+            }
+            break;
+        case 2:
+
+            if(hi==0){
+                std::cout << "7" << std::endl;
+                return 1;
+            }
+            if(hi==1){
+                std::cout << "8" << std::endl;
+                return 8;
+            }
+            if(hi==2){
+                std::cout << "9" << std::endl;
+                return 9;
+            }
+            break;
+    }
+
+
+}
 // Decode a chunk of samples from the queue
-std::vector<float> decoder::decode(std::vector<short> &samples) {
+void decoder::decode(std::vector<short> &samples) {
     /*
     for(int i=0; i<samples.size();i++){
         endelig.push_back(samples[i]);
@@ -416,12 +478,14 @@ std::vector<float> decoder::decode(std::vector<short> &samples) {
     //std::cout << "Største: " <<  largest_element << std::endl;
     //std::cout << "f.size(): " << f.size() << std::endl;
     //TODO: Del cArray op i  i frekvenser fra 1209-1633 (+-50) og i 697-941(+-50)
-    std::vector<float> res{0,0};
+    std::vector<int> res{0,0};
     if (abs(f[indexHi]) > 100000 && abs(f[indexLo]) > 30000) {
-    std::cout << "Low frekvensen er: " << frekvensLo * 1.035 << std::endl;
-    std::cout << "High frekvensen er: " << frekvensHi * 1.0295 << std::endl;
-    res[0]=frekvensLo;
-    res[1]=frekvensHi;
+    //std::cout << "Low frekvensen er: " << frekvensLo * 1.035 << std::endl;
+    //std::cout << "High frekvensen er: " << frekvensHi * 1.0295 << std::endl;
+    res[0]=frekvensLo*1.035;
+    res[1]=frekvensHi*1.0295;
+        //std::cout << "Ny High frekvensen er: " << res[1] << std::endl;
+    decoder::extractFrequency(res);
 }
     //for(int i=0; i<f.size();i++)
     //{
@@ -442,7 +506,8 @@ std::vector<float> decoder::decode(std::vector<short> &samples) {
     //abort();
     //decoder::extractFrequency(res);
     //TODO: Ret extractFreq til float
-    return res;
+    //decoder::extractFrequency(res);
+    //return res;
 }
 //}
 // Decode a chunk of samples from the queue (with threshold breaking)
@@ -498,66 +563,4 @@ void decoder::decode2(std::vector<short> &samples)
 
     decoder::status = state::running;
     std::cout << "kører" << std::endl;
-}
-
-int decoder::extractFrequency(std::vector<int> res) {
-    int lo=-1;
-    int hi=-1;
-    for(int i=0; i<3;i++){
-            if(res[0]==freqLo[i]){ //freqLo & Hi står i definitioner
-                lo=i;
-            }
-            if(res[1]==freqHi[i]){
-                hi=i;
-            }
-        }
-    switch(lo){
-        case 0:
-            std::cout << "0" << std::endl;
-            if(hi==0){
-                std::cout << "1" << std::endl;
-                return 1;
-            }
-            if(hi==1){
-                std::cout << "2" << std::endl;
-                return 2;
-            }
-            if(hi==2){
-                std::cout << "3" << std::endl;
-                return 3;
-            }
-            break;
-        case 1:
-            std::cout << "1" << std::endl;
-            if(hi==0){
-                std::cout << "4" << std::endl;
-                return 4;
-            }
-            if(hi==1){
-                std::cout << "5" << std::endl;
-                return 5;
-            }
-            if(hi==2){
-                std::cout << "6" << std::endl;
-                return 6;
-            }
-            break;
-        case 2:
-            std::cout << "7" << std::endl;
-            if(hi==0){
-                std::cout << "7" << std::endl;
-                return 1;
-            }
-            if(hi==1){
-                std::cout << "8" << std::endl;
-                return 8;
-            }
-            if(hi==2){
-                std::cout << "9" << std::endl;
-                return 9;
-            }
-            break;
-    }
-
-
 }

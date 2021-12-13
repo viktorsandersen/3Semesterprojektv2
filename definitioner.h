@@ -37,8 +37,8 @@ constexpr auto	TH_LEVELER			= 0.8;											// Threshold leveler (for calibrati
 constexpr int	TIMEOUT				= 500;											// Data-link Layer Timeout
 
 // DTMF Frequncies & Thresholds
-const float		freqLo[3]				= { 695.52,	  782.46,	  825.93};
-const float		freqHi[3]				= {1210.69,	 1340.41,	 1470.13};
+const float		freqLo[3]				= { 695,	  782,	  825};
+const float		freqHi[3]				= {1210,	 1340,	 1470};
 static int		freqThresholds[8]	= { 75,		   75,	   75,	   75,	  100,	  100,	  100,	  100 };
 const float		freqMultiplier[8]	= { 1.00,	 1.00,	  1.00,  1.00,	 1.00,	 1.00,	 1.00,	 1.00 };
 
