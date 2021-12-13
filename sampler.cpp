@@ -12,7 +12,11 @@ sampler::sampler(std::function<void(std::vector<short> samples)> callback, bool 
 {
     // set processing interval
     this->setProcessingInterval(sf::microseconds(this->interval));
-
+    std::vector<std::string> availableDevices = this->getAvailableDevices();
+    for(int i=0; i<availableDevices.size();i++){
+        std::cout << availableDevices[i] << std::endl;
+    }
+    this->setDevice(availableDevices[0]);
     // log
     std::cout << "\nInitialized sampler with:\n";
     std::cout << "SAMPLE RATE:\t\t" << this->rate << " Hz \n";

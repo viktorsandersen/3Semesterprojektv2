@@ -13,10 +13,10 @@ constexpr auto 	DATA_PATH			= "dat/";										// Path of data directory (defaul
 constexpr auto	PI					= 3.141592653589732;							// PI
 
 constexpr auto	SAMPLE_RATE			= 44100;										// Sample Rate in [Hz] (default = 44100)
-constexpr auto	SAMPLE_INTERVAL		= 10;											// Interval of sample processing [ms]
+constexpr auto	SAMPLE_INTERVAL		= 40;	//64										// Interval of sample processing [ms]
 
 constexpr int	CHUNK_SIZE			= (SAMPLE_RATE * SAMPLE_INTERVAL * 0.001f);		// Number of samples in a chunk
-constexpr auto	CHUNK_SIZE_MIN		= 458;											// Minimum number of samples in a chunk for Goertzel bin separation
+constexpr auto	CHUNK_SIZE_MIN		= 2048;//var 458									// Minimum number of samples in a chunk for Goertzel bin separation
 constexpr auto	CHUNK_SIZE_MAX		= 1.2 * CHUNK_SIZE;								// Maximum number of samples in a chunk before segregation
 
 constexpr auto	AMPLITUDE_MAX		= 32767;										// Maximum possible signal amplitude (100%) (SIGNED INT16 -> +- 2^15 - 1)
@@ -37,7 +37,8 @@ constexpr auto	TH_LEVELER			= 0.8;											// Threshold leveler (for calibrati
 constexpr int	TIMEOUT				= 500;											// Data-link Layer Timeout
 
 // DTMF Frequncies & Thresholds
-const int		freq[8]				= { 697,	  770,	  852,	  941,	 1209,	 1336,	 1477,	 1633 };
+const float		freqLo[3]				= { 695.52,	  782.46,	  825.93};
+const float		freqHi[3]				= {1210.69,	 1340.41,	 1470.13};
 static int		freqThresholds[8]	= { 75,		   75,	   75,	   75,	  100,	  100,	  100,	  100 };
 const float		freqMultiplier[8]	= { 1.00,	 1.00,	  1.00,  1.00,	 1.00,	 1.00,	 1.00,	 1.00 };
 

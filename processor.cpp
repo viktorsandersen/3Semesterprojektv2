@@ -215,7 +215,7 @@ std::array<float, 8> processor::goertzelArray(std::vector<short> &samples)
 
     for (int i = 0; i < 8; i++)
     {
-        tempArray[i] = processor::goertzel(samples, freq[i]);
+        //tempArray[i] = processor::goertzel(samples, freq[i]);
     }
 
     return tempArray;
@@ -228,7 +228,7 @@ void processor::printGoertzelArray(std::array<float, 8> &sampleArray)
 
     for (int i = 0; i < 8; i++)
     {
-        std::cout << freq[i] << " : " << sampleArray[i] << " | ";
+        //std::cout << freq[i] << " : " << sampleArray[i] << " | ";
     }
 
     std::cout << "\n\n";

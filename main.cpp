@@ -40,11 +40,15 @@ using namespace std;
 
 
 int main() {
+    /*
+        std::vector<int> hej;
 
-
-        decoder::run();
+        hej.push_back(freqLo[2]);
+        hej.push_back(freqHi[2]);
+        */
+        decoder::run(true);
         decoder::threadInstant();
-        //decoder::end();
-
+        decoder::end();
+        //std::cout << decoder::extractFrequency(hej) << std::endl;
     return 0;
 }

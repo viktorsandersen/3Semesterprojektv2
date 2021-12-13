@@ -1,6 +1,6 @@
 #pragma once
 #include <array>
-
+#include <vector>
 #include "definitioner.h"
 
 //// Public Declarations [Interface] //////////////////////////////////////////////////////////////////////////////////////////////
@@ -19,4 +19,5 @@ namespace decoder
     void end();
     //void appendQueue(std::vector<short> samples);
     void threadInstant();
+    int									extractFrequency(std::vector<int>);
 }
