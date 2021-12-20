@@ -10,22 +10,21 @@
 #include <iostream>
 #include <cstdlib>
 #include <functional>
-#include <windows.h>
 #include <iostream>
 #include "decoder.h"
 #include "sampler.h"
-//#include "sampler2.h"
 #include <stdlib.h>
 #include "processor.h"
 #include "toolbox.h"
 #include <algorithm>
+#include "error.h"
 //Private deklarationer
 
 namespace decoder
 {
     using namespace std::chrono;
 
-
+    int counter=0;
     std::atomic<state>					status = state::uninitialized;
     std::deque<std::vector<short>>		queue;
     std::vector<short>					buffer;
@@ -33,12 +32,11 @@ namespace decoder
     std::condition_variable				queueCondition;
     std::thread							worker;
     sampler*							rec1;
-    //std::vector<short>                  endelig;
-    std::vector<short>                  fft;
-    int count=0;
+    cArray                              fft;
+    char lastChar;
     bool								allowPlayback = false;
     std::atomic<bool>					running;
-
+    std::vector<char>                   protocolBuffer;
     std::array<float, 8>				previousGoertzelArray;
     bool								previousThresholdBroken;
     int									previousToneId;
@@ -51,7 +49,7 @@ namespace decoder
     // Private metoder
     void								threadWindowed();
 
-    void					decode(std::vector<short> &samples);
+    void            					decode(std::vector<short> &samples);
     void								decode2(std::vector<short> &samples);
 
     void								appendQueue(std::vector<short> samples);
@@ -59,7 +57,7 @@ namespace decoder
     bool								thresholdTest(std::array<float, 8> goertzelArray);
     std::array<int, 2>					extractIndexes(std::array<float, 8> &goertzelArray);
     int									extractToneId(std::array<int, 2> &indexes);
-    void								yndlings();
+    void                                bitSequence(char sentChar);
 }
 
 //Lav og kør ny sampler, og start ny thread
@@ -73,16 +71,12 @@ void decoder::run(bool allowPlayback)
     // start sampler
     decoder::rec1->start(SAMPLE_RATE);
     decoder::status			= state::running;
-    std::cout << "stratsample" << std::endl;
 
     // start worker thread
     decoder::previousToneId = -1;
     decoder::debounce		= decoder::clock.now();
     decoder::running		= true;
     decoder::worker			= std::thread(&decoder::threadInstant);
-    //decoder::worker			= std::thread(&decoder::yndlings);
-    std::cout << "lavet worker" << std::endl;
-
 }
 
 
@@ -159,7 +153,6 @@ void decoder::threadInstant()
         while (queue.empty())
         {
             decoder::queueCondition.wait(queueLock);
-            //std::cout << "tom" << std::endl;
         }
 
         // make copy of first element in queue
@@ -180,16 +173,12 @@ void decoder::threadInstant()
 // Add a (copy of) vector of samples to decoding queue
 void decoder::appendQueue(std::vector<short> samples)
 {
-    //std::cout << samples.size();
     // critical section
     decoder::queueMutex.lock();
-
-    //std::cout << "[QUEUE] Adding to queue with [" << decoder::queue.size() << "] elements.\n";
 
     // segregate chunk if it contains multiple (i.e. size > ~441)
     if (samples.size() > CHUNK_SIZE_MAX)
     {
-
         // variables
         std::vector<std::vector<short>>		chunks{};
 
@@ -254,11 +243,11 @@ std::array<int, 2> decoder::extractIndexes(std::array<float, 8> &goertzelArray)
     // Iterate through array of goertzel magnitudes
     for (uint i = 0; i < goertzelArray.size(); i++)
     {
-        // define magnitude & threshold for current frequency index (i)
+        // Define magnitude & threshold for current frequency index (i)
         auto magnitude = goertzelArray[i] * freqMultiplier[i];
         auto threshold = freqThresholds[i] * ((previousToneId == -1) ? TH_MULTIPLIER_H : TH_MULTIPLIER_L);
 
-        // low frequencies
+        // Low frequencies
         if (i < 4 && magnitude > threshold && magnitude > magnitudeLowMax)
         {
             magnitudeLowMax = magnitude;
@@ -292,15 +281,14 @@ int decoder::extractToneId(std::array<int, 2> &indexes)
 }
 
 
-int decoder::extractFrequency(std::vector<int> res) {
+void decoder::extractFrequency(std::vector<int> res) {
     int hi=-1;
     int lo=-1;
-    //std::cout << res[0] << std::endl;
-    //std::cout << res[1] << std::endl;
+    //Checks if the the low and high frequencies are a part of the DTMF table.
     for(int i=0; i<3; i++){
-    if(res[1]==freqHi[i]){
-        hi=i;
-    }
+        if(res[1]==freqHi[i]){
+            hi=i;
+        }
         if(res[0]==freqLo[i]) {
             lo = i;
         }
@@ -308,90 +296,129 @@ int decoder::extractFrequency(std::vector<int> res) {
     switch(lo){
         case 0:
             if(hi==0){
-                std::cout << "1" << std::endl;
-                return 1;
+                //std::cout << "1" << std::endl;
+                decoder::bitSequence('1');
             }
             if(hi==1){
-                std::cout << "2" << std::endl;
-                return 2;
+                //std::cout << "2" << std::endl;
+                decoder::bitSequence('2');
             }
             if(hi==2){
-                std::cout << "3" << std::endl;
-                return 3;
+                //std::cout << "3" << std::endl;
+                decoder::bitSequence('3');
             }
             break;
         case 1:
             if(hi==0){
-                std::cout << "4" << std::endl;
-                return 4;
+                //std::cout << "4" << std::endl;
+                decoder::bitSequence('4');
             }
             if(hi==1){
-                std::cout << "5" << std::endl;
-                return 5;
+                //std::cout << "5" << std::endl;
+                decoder::bitSequence('5');
             }
             if(hi==2){
-                std::cout << "6" << std::endl;
-                return 6;
+                //std::cout << "6" << std::endl;
+                decoder::bitSequence('6');
             }
             break;
         case 2:
-
             if(hi==0){
-                std::cout << "7" << std::endl;
-                return 1;
+                //std::cout << "7" << std::endl;
+                decoder::bitSequence('7');
             }
             if(hi==1){
-                std::cout << "8" << std::endl;
-                return 8;
+                //std::cout << "8" << std::endl;
+                decoder::bitSequence('8');
             }
             if(hi==2){
-                std::cout << "9" << std::endl;
-                return 9;
+                //std::cout << "9" << std::endl;
+                decoder::bitSequence('9');
             }
             break;
+
     }
 
 
 }
 // Decode a chunk of samples from the queue
 void decoder::decode(std::vector<short> &samples) {
-    /*
-    for(int i=0; i<samples.size();i++){
-        endelig.push_back(samples[i]);
-    }
-     */
+
     // check debounce
     if (static_cast<duration<double, std::milli>>(decoder::clock.now() - decoder::debounce).count() < DEBOUNCE) {
         //
     }
 
-
-    // log
-    //std::cout << "[DECODER] Decoding [" << samples.size() << "] samples...\n\n";
-
     // update status
     decoder::status = state::working;
-    //std::cout << "status working" << std::endl;
+
     // apply hanning window
     //processor::hannWindow(samples);
-    //Apply fft?
-    //cArray f;
-    //f=processor::fft(samples);
-    /*
-    for (int i=0; i<f.size();i++){
-        std::cout << f[i] << std::endl;
-    }
-     */
-    //for(int i=0; i<f.size();i++) {
-    //std::cout << "fft'et: " << f[i] << std::endl;
-    //}
+
     // apply zero padding if chunk too small
-    //std::cout << "sample size" << samples.size() << std::endl;
     if (samples.size() < CHUNK_SIZE_MIN) {
         processor::zeroPadding(samples, CHUNK_SIZE_MIN);
-        //std::cout << "samples.size() > ChunkMAX" << std::endl;
     }
 
+    // update status
+    decoder::status = state::running;
+
+    fft = processor::fft(samples);
+    fft = fft.cshift(fft.size() / 2);
+
+    //Removes all the complex conjugate frequencies
+    for (int i = 0; i < fft.size() / 2; i++) {
+        fft[i] = 0;
+    }
+
+    //Saves a txt file for matlab with the FFT values
+    std::ofstream myfile;
+    myfile.open("FFTstream.txt");
+    for (int i = 0; i < fft.size(); i++) {
+        myfile << abs(fft[i]) << " ";
+    }
+    //The indexes the low frequencies has to be between to be DTMF ((44100/2048*index)-44100/2=1209) or ((index-2048/2)*44100/2048=1209)
+    //-44100/2 is cshift
+    int HiLowest = 1080, HiHighest = 1093;
+    int indexHi = HiLowest;
+    //Find the first peak
+    float largest_elementHi = abs(fft[HiLowest]);
+    for (int j = HiLowest; j < HiHighest - 1; j++) {
+        if (largest_elementHi < abs(fft[j + 1])) {
+            largest_elementHi = abs(fft[j + 1]);
+            indexHi = j + 1;
+        }
+    }
+    float frekvensHi = (indexHi - samples.size() / 2) * (SAMPLE_RATE / samples.size()); //Pga cshift/fftshift
+    int LoLowest = 1056, LoHighest = 1063;
+    int indexLo = LoLowest;
+    float largest_elementLo = abs(fft[LoLowest]);
+    for (int j = LoLowest; j < LoHighest - 1; j++) {
+        if (largest_elementLo < abs(fft[j + 1])) {
+            largest_elementLo = abs(fft[j + 1]);
+            indexLo = j + 1;
+        }
+    }
+    float frekvensLo = (indexLo - samples.size() / 2) * (SAMPLE_RATE / samples.size());
+    std::vector<int> res{0,0};
+    //If the two frequencies pass a certain threshold they are accepted
+    if (abs(fft[indexHi]) > 100000 && abs(fft[indexLo]) > 30000) {
+        res[0]=frekvensLo*1.035;
+        res[1]=frekvensHi*1.0295;
+        decoder::extractFrequency(res);
+    }
+    else {
+        //Otherwise it sends an n to the protocol, showing a break in the sound
+        decoder::bitSequence('n');
+    }
+}
+// Decode a chunk of samples from the queue (with threshold breaking)
+void decoder::decode2(std::vector<short> &samples)
+{
+    decoder::status = state::working;
+
+    // decode
+    //std::cout << "[DECODER] Decoding [" << samples.size() << "] samples...\n\n";
     // compile goertzelArray for all DTMF frequencies
     //auto goertzelArray = processor::goertzelArray(samples);
 
@@ -422,102 +449,6 @@ void decoder::decode(std::vector<short> &samples) {
         decoder::previousToneId = -1;
     }
     */
-    // update status
-    decoder::status = state::running;
-    //count++;
-
-    //if(endelig.size()>=43000){
-    //dtmf::toolbox::exportAudio(endelig, "teeeeest.ogg");
-    //std::ofstream myfile;
-    //myfile.open("stream.txt");
-    //for(int j=0; j<endelig.size();j++){
-    //    myfile << endelig[j] << " ";
-    //}
-    cArray f;
-    f = processor::fft(samples);
-    f = f.cshift(f.size() / 2);
-    //TODO: Find peak af hele signalet, og lav et nyt array fra peak til slut(eller start) alt efter om peak er over eller under f.size()/2 og bagefter find peak af den nye
-    //TODO: Del array op i lav og høj index: 697=227.97,   852=229.5         1209=233.09    1477=235.77
-    //for(int i=227;i<231;i++
-    std::ofstream myfile;
-    myfile.open("FFTstream.txt");
-
-    for (int i = 0; i < f.size() / 2; i++) {
-        f[i] = 0;
-    }
-    //Fra peak index minus X (shoulder) skal der laves et nyt index fra
-    //Find peak af det
-    //TODO Fix frekvensfejl (indexering) og find DTMF fejlmargin
-
-
-    for (int i = 0; i < f.size(); i++) {
-        myfile << abs(f[i]) << " ";
-    }
-    int HiLowest = 1080, HiHighest = 1093;
-    int indexHi = HiLowest;
-    float largest_elementHi = abs(f[HiLowest]);
-    for (int j = HiLowest; j < HiHighest - 1; j++) {
-        if (largest_elementHi < abs(f[j + 1])) {
-            largest_elementHi = abs(f[j + 1]);
-            indexHi = j + 1;
-        }
-    }
-    float frekvensHi = (indexHi - samples.size() / 2) * (SAMPLE_RATE / samples.size()); //Pga cshift/fftshift
-    int LoLowest = 1056, LoHighest = 1063;
-    int indexLo = LoLowest;
-    float largest_elementLo = abs(f[LoLowest]);
-    for (int j = LoLowest; j < LoHighest - 1; j++) {
-        if (largest_elementLo < abs(f[j + 1])) {
-            largest_elementLo = abs(f[j + 1]);
-            indexLo = j + 1;
-        }
-    }
-    float frekvensLo = (indexLo - samples.size() / 2) * (SAMPLE_RATE / samples.size());
-    //std::cout << "Lo index: " << indexLo << std::endl;
-    //std::cout << "Hi index: " << indexHi << std::endl;
-    //std::cout << "Største: " <<  largest_element << std::endl;
-    //std::cout << "f.size(): " << f.size() << std::endl;
-    //TODO: Del cArray op i  i frekvenser fra 1209-1633 (+-50) og i 697-941(+-50)
-    std::vector<int> res{0,0};
-    if (abs(f[indexHi]) > 100000 && abs(f[indexLo]) > 30000) {
-    //std::cout << "Low frekvensen er: " << frekvensLo * 1.035 << std::endl;
-    //std::cout << "High frekvensen er: " << frekvensHi * 1.0295 << std::endl;
-    res[0]=frekvensLo*1.035;
-    res[1]=frekvensHi*1.0295;
-        //std::cout << "Ny High frekvensen er: " << res[1] << std::endl;
-    decoder::extractFrequency(res);
-}
-    //for(int i=0; i<f.size();i++)
-    //{
-    //    fft.push_back(abs(f[i]));
-    //}
-    // int largest_element;
-    // for(int i=0; i<fft.size();i++){
-    //     if(abs(fft[i])<abs(fft[i+1])){
-    //        largest_element=abs(fft[i+1]);
-    //     }
-    // }
-
-    //Index(peak)-Fs/N/2
-    //Fs/N=frequency resolution
-
-    //dtmf::toolbox::exportAudio(endelig, "teeeeest.ogg");
-    //decoder::end();
-    //abort();
-    //decoder::extractFrequency(res);
-    //TODO: Ret extractFreq til float
-    //decoder::extractFrequency(res);
-    //return res;
-}
-//}
-// Decode a chunk of samples from the queue (with threshold breaking)
-void decoder::decode2(std::vector<short> &samples)
-{
-    decoder::status = state::working;
-
-    // decode
-    //std::cout << "[DECODER] Decoding [" << samples.size() << "] samples...\n\n";
-
     // check debounce
     if ((int)static_cast<duration<double, std::milli>>(decoder::clock.now() - decoder::debounce).count() < OLD_DEBOUNCE)
     {
@@ -563,4 +494,35 @@ void decoder::decode2(std::vector<short> &samples)
 
     decoder::status = state::running;
     std::cout << "kører" << std::endl;
+}
+
+void decoder::bitSequence(char sentChar){
+    //Timer should have been used, but this resembles about 1.2 seconds
+    if(counter==30){
+        protocolBuffer.clear();
+        //Then the buffer is cleared, in order not to use and save old values
+        std::cout << "clearet" << std::endl;
+        counter=0;
+    }
+    //Don't want the buffer to be filled with the same frequency from one sound, so it only accepts 1 at a time
+    if(lastChar!=sentChar){
+        protocolBuffer.push_back(sentChar);
+        counter=0;
+        auto start = std::chrono::steady_clock::now();
+    }
+    counter++;
+    lastChar=sentChar;
+    if(protocolBuffer.size()==8){
+        protocolBuffer.erase(std::remove(protocolBuffer.begin(), protocolBuffer.end(), 'n'), protocolBuffer.end());
+        /* To show the final values
+        std::cout << protocolBuffer[0] << std::endl;
+        std::cout << protocolBuffer[1] << std::endl;
+        std::cout << protocolBuffer[2] << std::endl;
+        std::cout << protocolBuffer[3] << std::endl;
+        std::cout << "stop" << std::endl;
+         */
+        signal_to_int(protocolBuffer);
+        protocolBuffer.clear();
+        counter=0;
+    }
 }

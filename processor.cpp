@@ -220,16 +220,3 @@ std::array<float, 8> processor::goertzelArray(std::vector<short> &samples)
 
     return tempArray;
 }
-
-// Print magnitudes of goertzelArray
-void processor::printGoertzelArray(std::array<float, 8> &sampleArray)
-{
-    std::cout << "Goertzel array:\n";
-
-    for (int i = 0; i < 8; i++)
-    {
-        //std::cout << freq[i] << " : " << sampleArray[i] << " | ";
-    }
-
-    std::cout << "\n\n";
-}

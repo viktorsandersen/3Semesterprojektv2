@@ -51,6 +51,7 @@ void sampler::onStop()
 }
 
 // EVENT: Process a chunk of samples
+
 bool sampler::onProcessSamples(const sf::Int16* samples, std::size_t sampleCount)
 {
     if (this->status == state::idle)
@@ -59,8 +60,6 @@ bool sampler::onProcessSamples(const sf::Int16* samples, std::size_t sampleCount
     }
 
     this->status = state::processing;
-
-    //std::cout << "PROCESSING SAMPLES [" << sampleCount << "] ...\n";
 
     // create vector of samples
     const short* data = &samples[0]; // Int16*

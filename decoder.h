@@ -3,7 +3,7 @@
 #include <vector>
 #include "definitioner.h"
 
-//// Public Declarations [Interface] //////////////////////////////////////////////////////////////////////////////////////////////
+// Public Declarations [Interface]
 
 namespace decoder
 {
@@ -14,10 +14,9 @@ namespace decoder
         working
     };
 
-    // Public Methods ÆNDRET
-    void run(bool allowPlayback = false);
-    void end();
-    //void appendQueue(std::vector<short> samples);
-    void threadInstant();
-    int									extractFrequency(std::vector<int>);
+    // Public Methods
+    void        run(bool allowPlayback = false);
+    void        end();
+    void        threadInstant();
+    void		extractFrequency(std::vector<int>);
 }

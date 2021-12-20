@@ -2,8 +2,6 @@
 #include <valarray>
 #include <complex>
 
-// _ //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 using			uint				= unsigned int;									// Unsigned Integer
 using			uchar				= unsigned char;								// Unsigned Char
 using			cArray				= std::valarray<std::complex<double>>;			// Complex Value Array
@@ -13,10 +11,10 @@ constexpr auto 	DATA_PATH			= "dat/";										// Path of data directory (defaul
 constexpr auto	PI					= 3.141592653589732;							// PI
 
 constexpr auto	SAMPLE_RATE			= 44100;										// Sample Rate in [Hz] (default = 44100)
-constexpr auto	SAMPLE_INTERVAL		= 40;	//64										// Interval of sample processing [ms]
+constexpr auto	SAMPLE_INTERVAL		= 30;       									// Interval of sample processing [ms]
 
 constexpr int	CHUNK_SIZE			= (SAMPLE_RATE * SAMPLE_INTERVAL * 0.001f);		// Number of samples in a chunk
-constexpr auto	CHUNK_SIZE_MIN		= 2048;//var 458									// Minimum number of samples in a chunk for Goertzel bin separation
+constexpr auto	CHUNK_SIZE_MIN		= 2048;//							            // Minimum number of samples in a chunk for Goertzel bin separation
 constexpr auto	CHUNK_SIZE_MAX		= 1.2 * CHUNK_SIZE;								// Maximum number of samples in a chunk before segregation
 
 constexpr auto	AMPLITUDE_MAX		= 32767;										// Maximum possible signal amplitude (100%) (SIGNED INT16 -> +- 2^15 - 1)

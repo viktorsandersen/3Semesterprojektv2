@@ -3,7 +3,7 @@ project(3Semesterprojekt)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(3Semesterprojekt main.cpp definitioner.h decoder.cpp decoder.h sampler.cpp sampler.h processor.cpp processor.h toolbox.cpp toolbox.h)
+add_executable(3Semesterprojekt main.cpp definitioner.h decoder.cpp decoder.h sampler.cpp sampler.h processor.cpp processor.h toolbox.cpp toolbox.h error.cpp error.h)
 
 set(SFML_STATIC_LIBRARIES TRUE)
 set(SFML_DIR C:/SFML/lib/cmake/SFML)
